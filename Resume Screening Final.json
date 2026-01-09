@@ -1,0 +1,1096 @@
+{
+  "name": "Resume Screening Final",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {
+          "dataPropertyAttachmentsPrefixName": "attachment_0",
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        3088,
+        896
+      ],
+      "id": "0f432d5b-08f5-4703-8b97-174e0d8fac46",
+      "name": "Receive Resume",
+      "retryOnFail": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7Q8pF5fAqqQxZVL2",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "169a0bf3-73b7-4e07-9080-92fd7fc4e1e0"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Word Doc"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "dbb700a9-4c6a-4e60-8615-0a48d0556eba",
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "application/pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PDF"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d0f51929-55da-414e-8b00-fa40da22d86e",
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "text/plain",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        3536,
+        896
+      ],
+      "id": "178f65cc-370b-4d38-85bc-c17acb0185f6",
+      "name": "File Type"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        4160,
+        656
+      ],
+      "id": "4ff0580c-ca8e-48a0-a9a4-e53f1a770e7f",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_00",
+        "name": "={{ $json.headers.subject }} Resume",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1cB4a4Ck_QbfdA3zM967FrOgZHCPgMyEI",
+          "mode": "list",
+          "cachedResultName": "Resume",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1cB4a4Ck_QbfdA3zM967FrOgZHCPgMyEI"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3280,
+        896
+      ],
+      "id": "36cf368a-bc99-449d-8413-38eae26b168c",
+      "name": "Upload to Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vUGkhZZ6qqNXpiKe",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/drive/v2/files/{{ $json.id }}/copy?convert=true&supportsAllDrives=true",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3840,
+        656
+      ],
+      "id": "d4cd2e16-8f96-440e-82d7-2c36951a060d",
+      "name": "Convert Word to Docs",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vUGkhZZ6qqNXpiKe",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        4000,
+        656
+      ],
+      "id": "0d4df18e-61bb-4dd0-ba5b-d6eb33f88db4",
+      "name": "Get Doc",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vUGkhZZ6qqNXpiKe",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0f9e36f9-60cb-4593-a586-723124d69ff8",
+              "name": "resume",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4448,
+        656
+      ],
+      "id": "66f94974-e253-47a0-8063-87fb4ee0e61a",
+      "name": "Set Resume"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1RI4dL5b0B8NxkNiCgP1FnRUjOxK3jvly",
+          "mode": "list",
+          "cachedResultName": "JD.pdf",
+          "cachedResultUrl": "https://drive.google.com/file/d/1RI4dL5b0B8NxkNiCgP1FnRUjOxK3jvly/view?usp=drivesdk"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        4720,
+        656
+      ],
+      "id": "87639efa-1dad-4ce0-bae2-685c10cc5b4d",
+      "name": "Get Job Description",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vUGkhZZ6qqNXpiKe",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        4880,
+        656
+      ],
+      "id": "a4883678-3773-4b5c-8c49-55326870cfc5",
+      "name": "Extract from File1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Candidate Resume:\n\n{{ $('Set Resume').item.json.resume }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=# Overview\nYou are an expert technical recruiter specializing in AI, automation, and software roles. You have been given a job description and a candidate resume. Your task is to analyze the resume in relation to the job description and provide a detailed screening report. \n\nFocus specifically on how well the candidate matches the core requirements and ideal profile outlined in the job description. Evaluate both technical skill alignment and business-context understanding. Use reasoning grounded in the actual content of the resume and job post — avoid making assumptions.\n\n## Output\nYour output should follow this exact format:\n\nCandidate Strengths:  \nList the top strengths or relevant qualifications the candidate brings to the table. Be specific.\n\nCandidate Weaknesses:\nList areas where the candidate is lacking or mismatched based on the job description.\n\nRisk Factor:\n- Assign a risk score (Low / Medium / High)  \n- Explain the worst-case scenario if this candidate is hired.\n\nReward Factor: \n- Assign a reward score (Low / Medium / High)  \n- Describe the best-case scenario — what value could this candidate unlock?  \n- Does the candidate appear to be a short-term or long-term fit?\n\nOverall Fit Rating (0–10):  \nAssign a number between 0 (terrible match) and 10 (perfect match). Do not give decimals.\n\nDimension-wise Scoring Breakdown \n- Skills Match: X/10 \nReason: \n\n- Experience Relevance: X/10\nReason: \n\n- Role & Domain Fit: X/10 \nReason: \n\n- Seniority Alignment: X/10 \nReason: \n\n- Red Flags & Gaps: X/10 \nReason:\n\nWeighted Score Calculation Show the math clearly: (Skills * 0.30) + (Experience * 0.25) + (Role Fit * 0.20) + (Seniority * 0.15) + (Red Flags * 0.10) \n\nJustification for Rating:\nExplain clearly why this candidate received that score. Reference specific resume content and how it aligns or doesn't with the job description.\n\n## Job Description\n{{ $json.text }}\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        4320,
+        912
+      ],
+      "id": "5064572d-2758-4980-a8b3-2ed3c5bc9c97",
+      "name": "Recruiter Agent"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"candidate_strengths\": [\n    \"string\",\n    \"string\"\n  ],\n  \"candidate_weaknesses\": [\n    \"string\",\n    \"string\"\n  ],\n  \"risk_factor\": {\n    \"score\": \"Low | Medium | High\",\n    \"explanation\": \"string\"\n  },\n  \"reward_factor\": {\n    \"score\": \"Low | Medium | High\",\n    \"explanation\": \"string\",\n    \"time_horizon_fit\": \"Short-term | Long-term | Both\"\n  },\n  \"overall_fit_rating\": 0,\n  \"dimension_wise_scoring\": {\n    \"skills_match\": {\n      \"score\": 0,\n      \"out_of\": 10,\n      \"reason\": \"string\"\n    },\n    \"experience_relevance\": {\n      \"score\": 0,\n      \"out_of\": 10,\n      \"reason\": \"string\"\n    },\n    \"role_and_domain_fit\": {\n      \"score\": 0,\n      \"out_of\": 10,\n      \"reason\": \"string\"\n    },\n    \"seniority_alignment\": {\n      \"score\": 0,\n      \"out_of\": 10,\n      \"reason\": \"string\"\n    },\n    \"red_flags_and_gaps\": {\n      \"score\": 0,\n      \"out_of\": 10,\n      \"reason\": \"string\"\n    }\n  },\n  \"weighted_score_calculation\": {\n    \"formula\": \"(Skills * 0.30) + (Experience * 0.25) + (Role Fit * 0.20) + (Seniority * 0.15) + (Red Flags * 0.10)\",\n    \"calculation\": {\n      \"skills\": 0,\n      \"experience\": 0,\n      \"role_fit\": 0,\n      \"seniority\": 0,\n      \"red_flags\": 0\n    },\n    \"weighted_components\": {\n      \"skills_component\": 0.0,\n      \"experience_component\": 0.0,\n      \"role_fit_component\": 0.0,\n      \"seniority_component\": 0.0,\n      \"red_flags_component\": 0.0\n    },\n    \"total_weighted_score\": 0.0\n  },\n  \"justification_for_rating\": \"string\"\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        4448,
+        1152
+      ],
+      "id": "782ceb20-8a76-49d0-aeea-aa7f029c83fa",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o4-mini",
+          "mode": "list",
+          "cachedResultName": "o4-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        4272,
+        1152
+      ],
+      "id": "7f26c44b-73c1-4cd6-98a6-ce161ae57800",
+      "name": "o4-mini",
+      "credentials": {
+        "openAiApi": {
+          "id": "YzHjRbCCKXRKFfXo",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $('Set Resume').item.json.resume }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "First Name",
+              "description": "first name of the candidate",
+              "required": true
+            },
+            {
+              "name": "Last Name",
+              "description": "last name of the candidate",
+              "required": true
+            },
+            {
+              "name": "Email Address",
+              "description": "candidate's email address",
+              "required": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        4608,
+        912
+      ],
+      "id": "57d1600f-dfe0-4116-8bcc-6afce285d3c2",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "14CiupbVhNN7-siI6MibdtfFIgsCFTl8MBcamrrn6Zjs",
+          "mode": "list",
+          "cachedResultName": "test",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14CiupbVhNN7-siI6MibdtfFIgsCFTl8MBcamrrn6Zjs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14CiupbVhNN7-siI6MibdtfFIgsCFTl8MBcamrrn6Zjs/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $today }}",
+            "Resume": "={{ $('Upload to Drive').item.json.webViewLink }}",
+            "First Name": "={{ $json.output['First Name'] }}",
+            "Last Name ": "={{ $json.output['Last Name'] }}",
+            "Email": "={{ $json.output['Email Address'] }}",
+            "Strenghts": "={{ $('Recruiter Agent').item.json.output['Candidate Strengths'][0] }}\n\n{{ $('Recruiter Agent').item.json.output['Candidate Strengths'][1] }}\n\n{{ $('Recruiter Agent').item.json.output['Candidate Strengths'][2] }}\n\n{{ $('Recruiter Agent').item.json.output['Candidate Strengths'][3] }}\n\n{{ $('Recruiter Agent').item.json.output['Candidate Strengths'][4] }}\n",
+            "Weaknesses": "={{ $('Recruiter Agent').item.json.output['Candidate Weaknesses'][0] }}\n\n{{ $('Recruiter Agent').item.json.output['Candidate Weaknesses'][1] }}\n\n{{ $('Recruiter Agent').item.json.output['Candidate Weaknesses'][2] }}\n\n{{ $('Recruiter Agent').item.json.output['Candidate Weaknesses'][3] }}\n\n{{ $('Recruiter Agent').item.json.output['Candidate Weaknesses'][4] }}\n",
+            "Risk Factor": "={{ $('Recruiter Agent').item.json.output['Risk Factor'].score }}\n\n{{ $('Recruiter Agent').item.json.output['Risk Factor'].explanation }}",
+            "Reward Factor": "={{ $('Recruiter Agent').item.json.output['Reward Factor'].score }}\n\n{{ $('Recruiter Agent').item.json.output['Reward Factor'].explanation }}",
+            "Skill Match ": "={{ $('Recruiter Agent').item.json.output['Dimension-wise Scoring Breakdown'][0].score }}\n\n{{ $('Recruiter Agent').item.json.output['Dimension-wise Scoring Breakdown'][0].reason }}",
+            "Experience Relevance": "={{ $('Recruiter Agent').item.json.output['Dimension-wise Scoring Breakdown'][1].score }}\n\n{{ $('Recruiter Agent').item.json.output['Dimension-wise Scoring Breakdown'][1].reason }}",
+            "Role and Domain Fit": "={{ $('Recruiter Agent').item.json.output['Dimension-wise Scoring Breakdown'][2].score }}\n\n{{ $('Recruiter Agent').item.json.output['Dimension-wise Scoring Breakdown'][2].reason }}\n",
+            "Seniority Alignment": "={{ $('Recruiter Agent').item.json.output['Dimension-wise Scoring Breakdown'][3].score }}\n\n{{ $('Recruiter Agent').item.json.output['Dimension-wise Scoring Breakdown'][3].reason }}",
+            "Redflags and Gaps": "={{ $('Recruiter Agent').item.json.output['Dimension-wise Scoring Breakdown'][4].score }}\n\n{{ $('Recruiter Agent').item.json.output['Dimension-wise Scoring Breakdown'][4].reason }}",
+            "Weighted Score Calculated": "={{ $('Recruiter Agent').item.json.output[\"Weighted Score Calculation\"] }}",
+            "Justfification": "={{ $('Recruiter Agent').item.json.output[\"Justification for Rating\"] }}",
+            "output": "={{ $('Recruiter Agent').item.json.output[\"Overall Fit Rating\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resume",
+              "displayName": "Resume",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "First Name",
+              "displayName": "First Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Name ",
+              "displayName": "Last Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Strenghts",
+              "displayName": "Strenghts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Weaknesses",
+              "displayName": "Weaknesses",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Risk Factor",
+              "displayName": "Risk Factor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reward Factor",
+              "displayName": "Reward Factor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Skill Match ",
+              "displayName": "Skill Match ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Experience Relevance",
+              "displayName": "Experience Relevance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Role and Domain Fit",
+              "displayName": "Role and Domain Fit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Seniority Alignment",
+              "displayName": "Seniority Alignment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Redflags and Gaps",
+              "displayName": "Redflags and Gaps",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Weighted Score Calculated",
+              "displayName": "Weighted Score Calculated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Justfification",
+              "displayName": "Justfification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "output",
+              "displayName": "output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        4928,
+        912
+      ],
+      "id": "fba269b7-6044-41cc-80e7-e900de4deff8",
+      "name": "Append Data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SbocVGRG2SmsC5dO",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        4000,
+        896
+      ],
+      "id": "60f994d8-d142-4e11-baa0-142c4ca69e80",
+      "name": "Extract from File2"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3840,
+        896
+      ],
+      "id": "7227c7d5-919d-4e52-8217-2d0ccaca47d5",
+      "name": "Get PDF",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vUGkhZZ6qqNXpiKe",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3840,
+        1136
+      ],
+      "id": "20e0e594-346a-4102-8720-12c5d2c55390",
+      "name": "Get TXT",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vUGkhZZ6qqNXpiKe",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "destinationKey": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        4000,
+        1136
+      ],
+      "id": "0a262fe8-fa46-421f-92f8-40338b1ca104",
+      "name": "Extract from File3"
+    },
+    {
+      "parameters": {
+        "content": "## Resume Collection",
+        "height": 220,
+        "width": 420,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3040,
+        832
+      ],
+      "id": "0c6fdfb5-ec12-4417-989a-202c5043cd8d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## File Type",
+        "height": 220,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3472,
+        832
+      ],
+      "id": "3cd79a20-7ca3-47fd-9d9e-ad0c36c8c77d",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Word Doc",
+        "height": 220,
+        "width": 640,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3728,
+        592
+      ],
+      "id": "80721094-3526-427e-b65c-785595ab692c",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## PDF",
+        "height": 220,
+        "width": 440,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3728,
+        832
+      ],
+      "id": "d28dc789-2d3e-4487-96e1-da68b5e6ddf4",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Text File",
+        "height": 220,
+        "width": 440,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3728,
+        1072
+      ],
+      "id": "13514909-7cc8-4644-aa44-2eef25f9fa76",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## Standardize Input\n",
+        "height": 220,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4400,
+        592
+      ],
+      "id": "f62c1d44-fd6b-47fd-b8cc-b9bc021f9558",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## Get Job Description",
+        "height": 220,
+        "width": 420
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4656,
+        592
+      ],
+      "id": "7ca91280-0f6e-40aa-b174-a4ede1741f61",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "## Analysis & Information Extract",
+        "height": 220,
+        "width": 880,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4192,
+        832
+      ],
+      "id": "c372d696-0e49-4918-9d5c-e12eb3d868eb",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "## Model & Parser",
+        "height": 220,
+        "width": 420,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4192,
+        1072
+      ],
+      "id": "f98209e7-b638-47bf-83cc-01cc3bc0479f",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "# 🛠️ Setup Guide  \n**Author:** [Nate Herk](https://www.youtube.com/@nateherk)\n\nFollow the steps below to get this workflow up and running:\n\n### ✅ Step 1: Choose Your Trigger  \nDetermine what will kick off this workflow. In this example, we’re using **Gmail** as the trigger node.\n\n### ✅ Step 2: Connect Google Drive Credentials  \nMake sure your Google credentials are connected for both:\n- The **Google Drive nodes**\n- The **HTTP Request node** (used to convert a Word doc to a Google Doc)\n\n### ✅ Step 3: Add a Chat Model  \nConnect your favorite AI provider (like OpenAI or Anthropic) to power the **AI nodes** in this workflow.\n\n### ✅ Step 4: Pull In Your Job Description  \nMake sure the job description you want to analyze is accessible and properly pulled into the workflow (from Drive, HTTP, or direct text).\n\n### ✅ Step 5: Copy the [Google Sheet Template](https://docs.google.com/spreadsheets/d/1j6xAwY3lI8jDAz3EP0mboSmpz0d9ycD7y_DY2y6KJYM/edit?usp=sharing)  \nMake a copy of the sheet in your own Google Drive. This is where the workflow will write the parsed data back.\n\n### 💡 Final Step: Test It Out  \nTrigger the workflow with a test email and ensure the data flows correctly from source to sheet.\n",
+        "height": 700,
+        "width": 700
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2288,
+        592
+      ],
+      "id": "e9f5a25f-b7ea-454a-9e5a-aa61b2ab0c59",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o4-mini",
+          "mode": "list",
+          "cachedResultName": "o4-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        4384,
+        1360
+      ],
+      "id": "e258e312-046b-4c3d-9850-f00723197aa8",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "jgkS7VMMEcPbL7cs",
+          "name": "OpenAi account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Resume": {
+      "main": [
+        [
+          {
+            "node": "Upload to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Type": {
+      "main": [
+        [
+          {
+            "node": "Convert Word to Docs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get TXT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Drive": {
+      "main": [
+        [
+          {
+            "node": "File Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Word to Docs": {
+      "main": [
+        [
+          {
+            "node": "Get Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Doc": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Set Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Resume": {
+      "main": [
+        [
+          {
+            "node": "Get Job Description",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Job Description": {
+      "main": [
+        [
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "Recruiter Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Recruiter Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "o4-mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Recruiter Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recruiter Agent": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "Append Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get PDF": {
+      "main": [
+        [
+          {
+            "node": "Extract from File2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File2": {
+      "main": [
+        [
+          {
+            "node": "Set Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get TXT": {
+      "main": [
+        [
+          {
+            "node": "Extract from File3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File3": {
+      "main": [
+        [
+          {
+            "node": "Set Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b693fdee-cfc9-4df3-8c7a-a8a44c798997",
+  "meta": {
+    "instanceId": "d6b23962d3988bc3a929cb4badefb91d76ff6e889a801d0dc0a889ed77d5d774"
+  },
+  "id": "f3QrHxCyr2sQskkq",
+  "tags": []
+}
